@@ -90,6 +90,10 @@
       <span class="search-clear" id="searchClear" title="Effacer">✕</span>
     </div>
     <div class="topbar-actions">
+      <button class="btn-email" id="btnBulkEmail" title="Envoyer un email aux entreprises sélectionnées" style="display: none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Envoyer Email <span id="bulkEmailCount">(0)</span>
+      </button>
       <button class="btn-export" id="btnExport" title="Exporter les résultats en CSV">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Export CSV
@@ -99,7 +103,12 @@
 
   <!-- RESULT COUNT -->
   <div class="result-bar" id="resultBar">
-    <span id="resultCount">Chargement…</span>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; color: var(--text2);" title="Sélectionner / Désélectionner tout">
+        <input type="checkbox" id="selectAllCheckbox" style="accent-color: var(--accent); cursor: pointer; width: 16px; height: 16px;" /> Tout
+      </label>
+      <span id="resultCount">Chargement…</span>
+    </div>
     <div class="view-toggle">
       <button class="view-btn active" id="viewGrid" title="Vue grille">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>

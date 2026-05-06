@@ -52,6 +52,7 @@ let currentPage = 1;
 const PAGE_SIZE = 24;
 let currentView = 'list';
 let isGridMode = true;
+let selectedCompanies = new Set();
 
 /* ===== DOM REFS ===== */
 const searchInput   = document.getElementById('searchInput');
@@ -61,6 +62,9 @@ const filterSector  = document.getElementById('filterSector');
 const filterEmail   = document.getElementById('filterEmail');
 const btnReset      = document.getElementById('btnReset');
 const btnExport     = document.getElementById('btnExport');
+const btnBulkEmail  = document.getElementById('btnBulkEmail');
+const bulkEmailCount = document.getElementById('bulkEmailCount');
+const selectAllCheckbox = document.getElementById('selectAllCheckbox');
 const cardsGrid     = document.getElementById('cardsGrid');
 const pagination    = document.getElementById('pagination');
 const resultCount   = document.getElementById('resultCount');
@@ -92,6 +96,7 @@ function loadData() {
   }
 
   allRecords = json.records || [];
+  allRecords.forEach((r, i) => r._id = i);
 
   // Populate filters
   const cities = [...new Set(allRecords.map(r => r.city).filter(Boolean))].sort();
@@ -146,6 +151,7 @@ function applyFilters() {
   });
 
   currentPage = 1;
+  updateSelectAllCheckbox();
   renderCards();
 }
 
@@ -173,7 +179,30 @@ function renderCards() {
 
   // Bind card clicks
   cardsGrid.querySelectorAll('.card').forEach((el, i) => {
-    el.addEventListener('click', () => openModal(pageRecords[i]));
+    el.addEventListener('click', (e) => {
+      // If clicked on checkbox or its container, handle selection
+      if (e.target.closest('.card-checkbox')) {
+        const id = pageRecords[i]._id;
+        const checkbox = el.querySelector('input[type="checkbox"]');
+        
+        // If they clicked the div but not the actual input, toggle the input manually
+        if (e.target.tagName !== 'INPUT') {
+          checkbox.checked = !checkbox.checked;
+        }
+        
+        if (checkbox.checked) {
+          selectedCompanies.add(id);
+          el.classList.add('is-selected');
+        } else {
+          selectedCompanies.delete(id);
+          el.classList.remove('is-selected');
+        }
+        updateBulkEmailBtn();
+        updateSelectAllCheckbox();
+        return;
+      }
+      openModal(pageRecords[i]);
+    });
   });
 
   renderPagination(totalPages);
@@ -193,8 +222,13 @@ function cardHTML(r) {
     </div>
   `).join('');
 
+  const isSelected = selectedCompanies.has(r._id);
+
   return `
-  <div class="card" tabindex="0" role="button" aria-label="${escHtml(r.company)}">
+  <div class="card ${isSelected ? 'is-selected' : ''}" tabindex="0" role="button" aria-label="${escHtml(r.company)}">
+    <div class="card-checkbox" title="Sélectionner cette entreprise" style="position: absolute; top: 12px; right: 12px; z-index: 10; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+      <input type="checkbox" class="select-card-cb" ${isSelected ? 'checked' : ''} tabindex="-1" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent);">
+    </div>
     <div class="card-header">
       <div class="card-avatar" style="background:${color}">${initials}</div>
       <div class="card-company">
@@ -223,6 +257,53 @@ function cardHTML(r) {
       </div>
     </div>
   </div>`;
+}
+
+/* ===== BULK EMAIL ===== */
+function updateBulkEmailBtn() {
+  const count = selectedCompanies.size;
+  bulkEmailCount.textContent = `(${count})`;
+  btnBulkEmail.style.display = count > 0 ? 'flex' : 'none';
+}
+
+function updateSelectAllCheckbox() {
+  if (filteredRecords.length === 0) {
+    selectAllCheckbox.checked = false;
+    return;
+  }
+  // Check if all filtered records are selected
+  const allSelected = filteredRecords.every(r => selectedCompanies.has(r._id));
+  selectAllCheckbox.checked = allSelected;
+}
+
+function sendBulkEmail() {
+  if (selectedCompanies.size === 0) return;
+  
+  // Gather emails from selected companies
+  const emails = new Set();
+  allRecords.forEach(r => {
+    if (selectedCompanies.has(r._id) && r.contacts) {
+      r.contacts.forEach(c => {
+        if (c.email) emails.add(c.email);
+      });
+    }
+  });
+
+  if (emails.size === 0) {
+    showToast('Aucun email trouvé pour les entreprises sélectionnées.');
+    return;
+  }
+
+  // Use bcc to avoid exposing emails to everyone
+  const bccStr = Array.from(emails).join(',');
+  const mailtoLink = `mailto:?bcc=${encodeURIComponent(bccStr)}&subject=${encodeURIComponent("Contact")}`;
+  
+  // Create a temporary link to click (works better than window.location in some browsers)
+  const a = document.createElement('a');
+  a.href = mailtoLink;
+  a.click();
+  
+  showToast(`Préparation de l'email pour ${emails.size} contact(s)...`);
 }
 
 /* ===== PAGINATION ===== */
@@ -441,9 +522,22 @@ filterEmail.addEventListener('change', applyFilters);
 btnReset.addEventListener('click', () => {
   searchInput.value = ''; filterCity.value = ''; filterSector.value = '';
   filterEmail.checked = false; searchClear.classList.remove('visible');
+  selectedCompanies.clear(); updateBulkEmailBtn(); updateSelectAllCheckbox();
   applyFilters(); showToast('Filtres réinitialisés');
 });
 btnExport.addEventListener('click', exportCSV);
+btnBulkEmail.addEventListener('click', sendBulkEmail);
+
+selectAllCheckbox.addEventListener('change', (e) => {
+  if (e.target.checked) {
+    filteredRecords.forEach(r => selectedCompanies.add(r._id));
+  } else {
+    filteredRecords.forEach(r => selectedCompanies.delete(r._id));
+  }
+  updateBulkEmailBtn();
+  renderCards();
+});
+
 modalClose.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });

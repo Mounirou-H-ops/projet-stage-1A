@@ -609,3 +609,24 @@ body {
   .modal-header { padding: 20px 20px 14px; }
   .modal-body { padding: 16px 20px 20px; }
 }
+
+/* ===== SELECTION & BULK EMAIL ===== */
+.btn-email {
+  display: flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--accent3), var(--success));
+  border: none; color: #fff; border-radius: var(--radius-sm);
+  padding: 9px 16px; font-size: 0.83rem; font-weight: 600;
+  cursor: pointer; transition: opacity var(--transition), transform var(--transition);
+  font-family: 'Inter', sans-serif; white-space: nowrap;
+}
+.btn-email:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-email svg { width: 16px; height: 16px; }
+
+.card-checkbox {
+  opacity: 0; transition: opacity var(--transition);
+}
+.card:hover .card-checkbox, .card.is-selected .card-checkbox { opacity: 1; }
+.card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent), var(--shadow);
+}
