@@ -188,6 +188,23 @@ body {
 }
 .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
 
+.creator-message {
+  margin-top: auto; /* Pousse le message vers le bas si possible, sinon garde une marge */
+  padding-top: 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text3);
+}
+.creator-message a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  transition: color var(--transition);
+}
+.creator-message a:hover {
+  color: var(--accent2);
+  text-decoration: underline;
+}
 /* ===== MAIN CONTENT ===== */
 .main-content {
   margin-left: var(--sidebar-w);
